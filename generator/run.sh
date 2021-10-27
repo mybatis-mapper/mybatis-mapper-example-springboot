@@ -1,0 +1,1 @@
+java -cp "lib/*" io.mybatis.rui.cli.Main -p project.yaml
