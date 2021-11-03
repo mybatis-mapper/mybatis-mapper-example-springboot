@@ -8,7 +8,7 @@ import io.mybatis.example.springboot.model.Order;
 import org.springframework.stereotype.Service;
 
 /**
- * t_order1 - 
+ * order - 
  *
  * @author liuzh
  */

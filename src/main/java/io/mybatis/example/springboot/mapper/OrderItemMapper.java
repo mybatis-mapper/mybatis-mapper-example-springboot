@@ -10,12 +10,13 @@ import org.apache.ibatis.annotations.Lang;
 import org.apache.ibatis.annotations.Options;
 
 /**
- * t_order_item1 - 
+ * order_item - 
  *
  * @author liuzh
  */
 @org.apache.ibatis.annotations.Mapper
 public interface OrderItemMapper extends Mapper<OrderItem, Long> {
+
   /**
    * 保存实体，默认主键自增，并且名称为 id
    * <p>

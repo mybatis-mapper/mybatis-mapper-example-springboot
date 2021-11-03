@@ -5,7 +5,7 @@ import io.mybatis.provider.Entity;
 import java.util.Date;
 
 /**
- * t_order_item1 
+ * order_item 
  *
  * @author liuzh
  */

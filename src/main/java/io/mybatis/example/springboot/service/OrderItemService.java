@@ -5,7 +5,7 @@ import io.mybatis.service.BaseService;
 import io.mybatis.example.springboot.model.OrderItem;
 
 /**
- * t_order_item1 - 
+ * order_item - 
  *
  * @author liuzh
  */

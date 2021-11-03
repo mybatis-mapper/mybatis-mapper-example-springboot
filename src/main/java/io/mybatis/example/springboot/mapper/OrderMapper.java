@@ -1,6 +1,5 @@
 package io.mybatis.example.springboot.mapper;
 
-import io.mybatis.example.springboot.model.OrderItem;
 import io.mybatis.mapper.Mapper;
 
 import io.mybatis.example.springboot.model.Order;
@@ -11,12 +10,13 @@ import org.apache.ibatis.annotations.Lang;
 import org.apache.ibatis.annotations.Options;
 
 /**
- * t_order1 - 
+ * order - 
  *
  * @author liuzh
  */
 @org.apache.ibatis.annotations.Mapper
 public interface OrderMapper extends Mapper<Order, Long> {
+
   /**
    * 保存实体，默认主键自增，并且名称为 id
    * <p>

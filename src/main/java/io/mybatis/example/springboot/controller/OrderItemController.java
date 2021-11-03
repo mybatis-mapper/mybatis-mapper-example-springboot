@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * t_order_item1 - 
+ * order_item - 
  *
  * @author liuzh
  */
@@ -38,7 +38,7 @@ public class OrderItemController {
 
   @PutMapping(value = "/{id}")
   public DataResponse<OrderItem> update(@PathVariable("id") Integer id, @RequestBody OrderItem orderItem) {
-    orderItem.setOrderId(id);
+    orderItem.setItemId(id);
     return DataResponse.ok(orderItemService.update( orderItem));
   }
 

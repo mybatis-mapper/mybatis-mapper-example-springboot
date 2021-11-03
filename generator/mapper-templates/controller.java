@@ -38,7 +38,11 @@ public class ${it.name.className}Controller {
 
   @PutMapping(value = "/{id}")
   public DataResponse<${it.name.className}> update(@PathVariable("id") Integer id, @RequestBody ${it.name.className} ${it.name.fieldName}) {
-    //FIXME TODO ${it.name.fieldName}.setId(id);
+    <#list it.columns as column>
+    <#if column.pk>
+    ${it.name.fieldName}.set${column.name.className}(id);
+    </#if>
+    </#list>
     return DataResponse.ok(${it.name.fieldName}Service.update( ${it.name.fieldName}));
   }
 

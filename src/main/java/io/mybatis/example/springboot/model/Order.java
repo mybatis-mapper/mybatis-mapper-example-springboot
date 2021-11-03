@@ -4,7 +4,7 @@ import io.mybatis.provider.Entity;
 
 
 /**
- * t_order1 
+ * order 
  *
  * @author liuzh
  */

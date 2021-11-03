@@ -22,12 +22,9 @@ database:
     # 密码
     password:
   tableRules:
-    - name: t_order1
-      search: t_order1
-      replace: order
-    - name: t_order_item1
-      search: t_order_item1
-      replace: order_item
+    - name: t%1
+      search: t_(?<name>.*)1
+      replace: ${name}
   # 根据类型对字段类型打标签, 可以通过 column.tags.TAG 的 true/false 来判断当前列是否有该标签
   # 主要对列进行分类，方便后续模板中的使用
   typeTags:
