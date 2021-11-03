@@ -1,6 +1,7 @@
 package ${package};
 
 import io.mybatis.mapper.Mapper;
+
 import ${project.attrs.basePackage}.model.${it.name.className};
 
 /**
