@@ -16,15 +16,18 @@ database:
     # jdbc驱动
     driver: com.mysql.jdbc.Driver
     # jdbc连接地址
-    url: jdbc:mysql://localhost:3306/test?useSSL=false
+    url: jdbc:mysql://localhost:3306/db_0?useSSL=false
     # 用户名
     user: root
     # 密码
     password:
-  # 获取表配置，支持 % 和 _ 模糊匹配，可以配置多个值
-  # 还有一个支持复杂规则 tableRules 属性后续单独介绍
-  tables:
-    - '%'
+  tableRules:
+    - name: t_order1
+      search: t_order1
+      replace: order
+    - name: t_order_item1
+      search: t_order_item1
+      replace: order_item
   # 根据类型对字段类型打标签, 可以通过 column.tags.TAG 的 true/false 来判断当前列是否有该标签
   # 主要对列进行分类，方便后续模板中的使用
   typeTags:

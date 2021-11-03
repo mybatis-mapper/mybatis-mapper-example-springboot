@@ -37,8 +37,8 @@ public class ${it.name.className}Controller {
   }
 
   @PutMapping(value = "/{id}")
-  public DataResponse<${it.name.className}> update(@PathVariable("id") Long id, @RequestBody ${it.name.className} ${it.name.fieldName}) {
-    ${it.name.fieldName}.setId(id);
+  public DataResponse<${it.name.className}> update(@PathVariable("id") Integer id, @RequestBody ${it.name.className} ${it.name.fieldName}) {
+    //FIXME TODO ${it.name.fieldName}.setId(id);
     return DataResponse.ok(${it.name.fieldName}Service.update( ${it.name.fieldName}));
   }
 

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.mybatis.example.springboot.mapper.OrderItemMapper">
+  <resultMap id="baseResultMap" type="io.mybatis.example.springboot.model.OrderItem">
+    <id property="itemId" column="item_id" jdbcType="INTEGER"/>
+    <result property="orderId" column="order_id" jdbcType="INTEGER"/>
+    <result property="userId" column="user_id" jdbcType="INTEGER"/>
+    <result property="status" column="status" jdbcType="VARCHAR"/>
+    <result property="creationDate" column="creation_date" jdbcType="DATE"/>
+  </resultMap>
+</mapper>

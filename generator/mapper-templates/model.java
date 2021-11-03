@@ -15,7 +15,7 @@ import ${javaType};
 public class ${it.name.className} {
   <#list it.columns as column>
   <#if column.pk>
-  @Entity.Column(value = "${column.name}", id = true, remark = "${column.comment}", updatable = false, insertable = false)
+  @Entity.Column(value = "${column.name}", id = true, remark = "${column.comment}", updatable = false)
   <#else>
   @Entity.Column(value = "${column.name}", remark = "${column.comment}"<#if column.tags.jdbcType>, jdbcType = org.apache.ibatis.type.JdbcType.${column.jdbcType}</#if>)
   </#if>
