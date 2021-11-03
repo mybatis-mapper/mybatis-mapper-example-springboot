@@ -7,13 +7,7 @@ import ${project.attrs.basePackage}.model.${it.name.className};
 import ${project.attrs.basePackage}.service.${it.name.className}Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * ${it.name} - ${it.comment}
@@ -28,12 +22,12 @@ public class ${it.name.className}Controller {
   private ${it.name.className}Service ${it.name.fieldName}Service;
 
   @PostMapping
-  public DataResponse<${it.name.className}> save(${it.name.className}  ${it.name.fieldName}) {
+  public DataResponse<${it.name.className}> save(@RequestBody ${it.name.className} ${it.name.fieldName}) {
     return DataResponse.ok(${it.name.fieldName}Service.save( ${it.name.fieldName}));
   }
 
   @GetMapping
-  public RowsResponse<${it.name.className}> findList(${it.name.className}  ${it.name.fieldName}) {
+  public RowsResponse<${it.name.className}> findList(@RequestBody ${it.name.className} ${it.name.fieldName}) {
     return RowsResponse.ok(${it.name.fieldName}Service.findList( ${it.name.fieldName}));
   }
 
@@ -43,8 +37,8 @@ public class ${it.name.className}Controller {
   }
 
   @PutMapping(value = "/{id}")
-  public DataResponse<${it.name.className}> update(@PathVariable("id") Long id, ${it.name.className}  ${it.name.fieldName}) {
-     ${it.name.fieldName}.setId(id);
+  public DataResponse<${it.name.className}> update(@PathVariable("id") Long id, @RequestBody ${it.name.className} ${it.name.fieldName}) {
+    ${it.name.fieldName}.setId(id);
     return DataResponse.ok(${it.name.fieldName}Service.update( ${it.name.fieldName}));
   }
 

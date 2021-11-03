@@ -1,5 +1,5 @@
 # 模板的名字，生成代码的根目录名称
-name: mybatis-mapper-springboot
+name: mybatis-mapper-example-springboot
 # 代码生成的路径，可以使用 SYS 和 ENV 等变量，具体包含的内容和运行环境有关
 # user.dir 为当前运行命令的目录，path 不设置时的默认值也是当前路径，在命令行中可以通过 —o 重新指定位置
 # 当 path 路径以 .zip 后缀结尾时，会将生成的目录结构和代码放到压缩包中

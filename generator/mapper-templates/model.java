@@ -12,18 +12,16 @@ import ${javaType};
  * @author ${SYS['user.name']}
  */
 @Entity.Table(value = "${it.name}", <#if it.comment?has_content>remark = "${it.comment}", </#if>autoResultMap = true)
-public class ${it.name.className} {
+public class ${it.name.className} extends BaseId {
   <#list it.columns as column>
-  <#if column.pk>
-  @Entity.Column(value = "${column.name}", id = true, remark = "${column.comment}", updatable = false, insertable = false)
-  <#else>
+  <#if !column.pk>
   @Entity.Column(value = "${column.name}", remark = "${column.comment}"<#if column.tags.jdbcType>, jdbcType = org.apache.ibatis.type.JdbcType.${column.jdbcType}</#if>)
-  </#if>
   private ${column.javaType} ${column.name.fieldName};
-
+  </#if>
   </#list>
 
   <#list it.columns as column>
+  <#if !column.pk>
   /**
    * 获取 ${column.comment}
    *
@@ -42,5 +40,6 @@ public class ${it.name.className} {
     this.${column.name.fieldName} = ${column.name.fieldName};
   }
 
+  </#if>
   </#list>
 }
