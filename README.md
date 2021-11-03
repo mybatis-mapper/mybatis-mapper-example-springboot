@@ -1,62 +1,69 @@
-# mybatis-mapper spring-boot 示例
+# mybatis-mapper spring-boot sharding-jdbc 示例
 
 ## https://mapper.mybatis.io
+
+## https://shardingsphere.apache.org
 
 ## 项目依赖
 
 当前项目依赖中，主要包含了:
 ```xml
 <dependency>
-  <groupId>io.mybatis</groupId>
-  <artifactId>mybatis-service</artifactId>
-  <version>1.0.2</version>
-</dependency>
-```
-这个依赖会传递依赖 `mybatis-mapper` 模块。
-
-除此之外还有 mybatis 的 starter:
-```xml
-<dependency>
   <groupId>org.mybatis.spring.boot</groupId>
   <artifactId>mybatis-spring-boot-starter</artifactId>
   <version>2.2.0</version>
 </dependency>
-```
-
-项目使用的 MySQL 数据库:
-```xml
 <dependency>
-  <groupId>mysql</groupId>
-  <artifactId>mysql-connector-java</artifactId>
-  <scope>runtime</scope>
+  <groupId>io.mybatis</groupId>
+  <artifactId>mybatis-service</artifactId>
+  <version>1.0.3</version>
+</dependency>
+<dependency>
+  <groupId>org.apache.shardingsphere</groupId>
+  <artifactId>sharding-jdbc-spring-boot-starter</artifactId>
+  <version>4.1.1</version>
 </dependency>
 ```
 
-## 基础代码
+## 配置文件
 
-项目中只有 `MapperSpringbootApplication` 类和对应的测试代码类：
-```java
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+主要是分片规则（参考官方示例），剩下的是 mybatis xml 配置文件路径的配置。
 
-@SpringBootApplication
-public class MapperSpringbootApplication {
-
-  public static void main(String[] args) {
-    SpringApplication.run(MapperSpringbootApplication.class, args);
-  }
-
-}
-```
-没有特殊的东西。
-
-除了俩代码，剩下的还有一个 spring-boot 配置文件:
 ```yaml
 spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/test?useSSL=false
-    username: root
-    password:
+  shardingsphere:
+    datasource:
+      names: ds0,ds1
+      ds0:
+        driver-class-name: com.mysql.jdbc.Driver
+        password: ''
+        type: com.zaxxer.hikari.HikariDataSource
+        jdbc-url: jdbc:mysql://localhost:3306/db_0
+        username: root
+      ds1:
+        driver-class-name: com.mysql.jdbc.Driver
+        password: ''
+        type: com.zaxxer.hikari.HikariDataSource
+        jdbc-url: jdbc:mysql://localhost:3306/db_1
+        username: root
+    sharding:
+      default-database-strategy:
+        inline:
+          algorithm-expression: ds$->{user_id % 2}
+          sharding-column: user_id
+      tables:
+        t_order:
+          actual-data-nodes: ds$->{0..1}.t_order$->{0..1}
+          table-strategy:
+            inline:
+              algorithm-expression: t_order$->{order_id % 2}
+              sharding-column: order_id
+        t_order_item:
+          actual-data-nodes: ds$->{0..1}.t_order_item$->{0..1}
+          table-strategy:
+            inline:
+              algorithm-expression: t_order_item$->{order_id % 2}
+              sharding-column: order_id
 mybatis:
   mapper-locations: classpath*:mappers/*.xml
 ```
@@ -90,148 +97,138 @@ database:
     # jdbc驱动
     driver: com.mysql.jdbc.Driver
     # jdbc连接地址
-    url: jdbc:mysql://localhost:3306/test?useSSL=false
+    url: jdbc:mysql://localhost:3306/db_0?useSSL=false
     # 用户名
     user: root
     # 密码
     password:
-  # 获取表配置，支持 % 和 _ 模糊匹配，可以配置多个值
-  # 还有一个支持复杂规则 tableRules 属性后续单独介绍
-  tables:
-    - '%'
+  tableRules:
+    - name: t%1
+      search: t_(?<name>.*)1
+      replace: ${name}
 ```
 
-`tables` 部分可以配置多个表名，支持模糊匹配（使用 `%` 和 `_`），上面配置的 `%` 会匹配当前数据库下面的所有表。你可以指定要生成的表：
+这里使用了 `tableRules` 配置获取表的规则，由于存在同一个表结构的多个分片，因此这里只筛选出序号 1 的表。并且通过正则表达式保留了中间部分（如 `t_order1 => order`）。
+
 ```yaml
-  tables:
-    - 'user'
-    - 'role'
-    - 'user_role'
+  tableRules:
+    - name: t%1
+      search: t_(?<name>.*)1
+      replace: ${name}
 ```
 
 配置完成后，在控制台执行上面的 `run.xx` 脚本，脚本就一行命令 `java -cp "lib/*" io.mybatis.rui.cli.Main -p project.yaml`。
 
-执行命令效果：
+## 代码生成器中几个特殊地方
+
+### Controller 中设置 id
+
+```ftl
+  @PutMapping(value = "/{id}")
+  public DataResponse<${it.name.className}> update(@PathVariable("id") Integer id, @RequestBody ${it.name.className} ${it.name.fieldName}) {
+    <#list it.columns as column>
+    <#if column.pk>
+    ${it.name.fieldName}.set${column.name.className}(id);
+    </#if>
+    </#list>
+    return DataResponse.ok(${it.name.fieldName}Service.update( ${it.name.fieldName}));
+  }
 ```
-$ ./run.sh 
-[main] TRACE Project - SYS可用参数:
-[main] TRACE Project - SYS['sun.cpu.isalist'] = 
+每个表的主键都不一样，因此这里set需要筛选出主键字段名。
 
-省略大量系统变量...
-
-[main] TRACE Project - SYS['user.dir'] = /Users/test/Git/mybatis-mapper-springboot/generator
-[main] TRACE Project - SYS['java.runtime.name'] = Java(TM) SE Runtime Environment
-
-[main] TRACE Project - ENV可用参数:
-[main] TRACE Project - ENV['SHELL'] = /bin/bash
-[main] TRACE Project - ENV['JAVA_MAIN_CLASS_13215'] = io.mybatis.rui.cli.Main
-[main] TRACE Project - ENV['JAVA_HOME'] = /Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/
-
-省略大量环境变量...
-
-in] DEBUG Project - 执行程序路径: /Users/xhj/Git/mybatis-mapper-springboot/generator
-[main] DEBUG Project - basedir变量: /Users/xhj/Git/mybatis-mapper-springboot/generator
-[main] DEBUG Project - yamlDir变量: /Users/xhj/Git/mybatis-mapper-springboot/generator
-[main] DEBUG Database - 获取数据库信息
-[2021-10-27 11:16:24] [DEBUG] rui.pJ: Use [Hutool Console Logging] Logger As Default.
-[main] DEBUG Database - 获取表: role
-[main] TRACE Database - 记录列: id
-[main] TRACE Database - 记录列: role_name
-[main] DEBUG Database - 获取表: user
-[main] TRACE Database - 记录列: id
-[main] TRACE Database - 记录列: user_name
-[main] TRACE Database - 记录列: user_age
-[main] TRACE Database - 记录列: address
-[main] DEBUG Database - 获取表: user_role
-[main] TRACE Database - 记录列: id
-[main] TRACE Database - 记录列: user_id
-[main] TRACE Database - 记录列: role_id
-[main] DEBUG Database - 通过 SQL 获取表的注释信息
-[main] DEBUG Database - 执行 SQL: SELECT TABLE_NAME, TABLE_COMMENT 
-                                 FROM information_schema.TABLES 
-                                 WHERE TABLE_SCHEMA = 'test' 
-                                       AND TABLE_NAME in ( 'user_role','role','user' )
-[main] DEBUG Database - 表: role - 角色
-[main] DEBUG Database - 表: user - 用户
-[main] DEBUG Database - 表: user_role - 用户和角色关联
-[main] DEBUG Context - 生成项目路径: /Users/test/Git/mybatis-mapper-springboot/generator/../../
-[main] DEBUG Context - 读取模板路径: mapper-templates
-[main] DEBUG Generator - 已存在目录: /Users/test/Git/mybatis-mapper-springboot
-[main] DEBUG Generator - 已存在目录: /Users/test/Git/mybatis-mapper-springboot/src/main
-[main] DEBUG Generator - 已存在目录: /Users/test/Git/mybatis-mapper-springboot/src/main/java
-[main] DEBUG Generator - 已存在包: io.mybatis.example.springboot
-[main] DEBUG Generator - 创建包: mapper
-[main] DEBUG Generator - 初次创建文件: RoleMapper.java
-[main] DEBUG Generator - 初次创建文件: UserMapper.java
-[main] DEBUG Generator - 初次创建文件: UserRoleMapper.java
-[main] DEBUG Generator - 创建包: model
-[main] DEBUG Generator - 初次创建文件: Role.java
-[main] DEBUG Generator - 初次创建文件: User.java
-[main] DEBUG Generator - 初次创建文件: UserRole.java
-[main] DEBUG Generator - 创建包: service
-[main] DEBUG Generator - 初次创建文件: RoleService.java
-[main] DEBUG Generator - 初次创建文件: UserService.java
-[main] DEBUG Generator - 初次创建文件: UserRoleService.java
-[main] DEBUG Generator - 创建包: impl
-[main] DEBUG Generator - 初次创建文件: RoleServiceImpl.java
-[main] DEBUG Generator - 初次创建文件: UserServiceImpl.java
-[main] DEBUG Generator - 初次创建文件: UserRoleServiceImpl.java
-[main] DEBUG Generator - 创建包: controller
-[main] DEBUG Generator - 初次创建文件: RoleController.java
-[main] DEBUG Generator - 初次创建文件: UserController.java
-[main] DEBUG Generator - 初次创建文件: UserRoleController.java
-[main] DEBUG Generator - 已存在目录: /Users/test/Git/mybatis-mapper-springboot/src/main/resources
-[main] DEBUG Generator - 创建目录: /Users/test/Git/mybatis-mapper-springboot/src/main/resources/mappers
-[main] DEBUG Generator - 初次创建文件: RoleMapper.xml
-[main] DEBUG Generator - 初次创建文件: UserMapper.xml
-[main] DEBUG Generator - 初次创建文件: UserRoleMapper.xml
+### Mapper 接口重写两个 insert 接口
+```ftl
+  @Override
+  @Lang(Caching.class)
+  <#list it.columns as column>
+  <#if column.pk>
+  @Options(useGeneratedKeys = true, keyProperty = "${column.name}")
+  </#if>
+  </#list>
+  @InsertProvider(type = EntityProvider.class, method = "insert")
+  int insert(${it.name.className} entity);
 ```
+和Controller类似，由于主键不同，这里需要单独设置 `keyProperty`。
 
-生成代码如下：
+### 实体类
+```ftl
+<#-- 逻辑表名使用 t_ 前缀 -->
+@Entity.Table(value = "t_${it.name}", <#if it.comment?has_content>remark = "${it.comment}", </#if>autoResultMap = true)
+public class ${it.name.className} {
+  <#-- 下面数组中的字段是分片字段，不允许修改值 -->
+  <#assign updateables = ["user_id", "order_id", "item_id"]>
+  <#list it.columns as column>
+  <#if column.pk>
+  @Entity.Column(value = "${column.name}", id = true, remark = "${column.comment}", updatable = false)
+  <#else>
+  @Entity.Column(value = "${column.name}", remark = "${column.comment}"<#if column.tags.jdbcType>, jdbcType = org.apache.ibatis.type.JdbcType.${column.jdbcType}</#if><#if updateables?seq_index_of(column.name) gt -1>, updatable = false</#if>)
+  </#if>
+  private ${column.javaType} ${column.name.fieldName};
 
-![](images/generator.png)
+  </#list>
+```
+第一个是 `value = "t_${it.name}"`，由于代码生成器中配置会让 `t_order1` 变成 `order`，所以这里逻辑表名手工加了个 `t_` 前缀。
+
+其次是 `<#assign updateables = ["user_id", "order_id", "item_id"]>` 和 下面的 `<#if updateables?seq_index_of(column.name) gt -1>, updatable = false</#if>`，分片键不能更新字段值，
+所以这里通过特殊的方式设置字段 `updatable = false`。
 
 ## 运行项目
 
 生成代码后，启动服务，可以通过HTTP简单测试。
 
-```
-GET http://127.0.0.1:8080/roles
-
-HTTP/1.1 200 
+```http request
+### 新增
+POST http://localhost:8080/orders
 Content-Type: application/json
-Transfer-Encoding: chunked
-Date: Wed, 27 Oct 2021 03:36:05 GMT
-Keep-Alive: timeout=60
-Connection: keep-alive
 
-[
-  {
-    "id": 1,
-    "roleName": "管理员"
-  }
-]
+{
+  "orderId": 1,
+  "userId": 1,
+  "status": "UP"
+}
+
+### 查询单个订单
+GET http://localhost:8080/orders/1
+
+### 查询全部
+GET http://localhost:8080/orders
+Content-Type: application/json
+
+{}
+
+### 修改
+PUT http://localhost:8080/orders/1
+Content-Type: application/json
+
+{
+  "status": "DOWN"
+}
+
+### 删除
+DELETE http://localhost:8080/orders/1
 ```
 
-## 必要的代码
+## 主要代码
 
 可以根据生成的代码简单了解 mybatis-mapper，使用 mybatis-mapper 只需要两个主要的类，其他都是可选的辅助，主要的两个类，
 一个是实体类，例如：
 
 ```java
-@Entity.Table(value = "user", remark = "用户", autoResultMap = true)
-public class User {
-  @Entity.Column(value = "id", id = true, remark = "主键", updatable = false, insertable = false)
-  private Long id;
+/**
+ * order 
+ *
+ * @author liuzh
+ */
+@Entity.Table(value = "t_order", autoResultMap = true)
+public class Order {
+  @Entity.Column(value = "order_id", id = true, remark = "", updatable = false)
+  private Integer orderId;
 
-  @Entity.Column(value = "user_name", remark = "用户名")
-  private String userName;
+  @Entity.Column(value = "user_id", remark = "", updatable = false)
+  private Integer userId;
 
-  @Entity.Column(value = "user_age", remark = "年龄")
-  private Integer userAge;
-
-  @Entity.Column(value = "address", remark = "地址")
-  private String address;
+  @Entity.Column(value = "status", remark = "")
+  private String status;
 
   //省略 getter,setter
 }
@@ -239,17 +236,52 @@ public class User {
 
 还有一个 Mapper 接口:
 ```java
+package io.mybatis.example.springboot.mapper;
+
 import io.mybatis.mapper.Mapper;
-import io.mybatis.example.springboot.model.User;
+
+import io.mybatis.example.springboot.model.Order;
+import io.mybatis.mapper.base.EntityProvider;
+import io.mybatis.provider.Caching;
+import org.apache.ibatis.annotations.InsertProvider;
+import org.apache.ibatis.annotations.Lang;
+import org.apache.ibatis.annotations.Options;
 
 /**
- * user - 用户
+ * order - 
  *
- * @author xhj
+ * @author liuzh
  */
 @org.apache.ibatis.annotations.Mapper
-public interface UserMapper extends Mapper<User, Long> {
+public interface OrderMapper extends Mapper<Order, Long> {
 
+  /**
+   * 保存实体，默认主键自增，并且名称为 id
+   * <p>
+   * 这个方法是个示例，你可以在自己的接口中使用相同的方式覆盖父接口中的配置
+   *
+   * @param entity 实体类
+   * @return 1成功，0失败
+   */
+  @Override
+  @Lang(Caching.class)
+  @Options(useGeneratedKeys = true, keyProperty = "order_id")
+  @InsertProvider(type = EntityProvider.class, method = "insert")
+  int insert(Order entity);
+
+  /**
+   * 保存实体中不为空的字段，默认主键自增，并且名称为 id
+   * <p>
+   * 这个方法是个示例，你可以在自己的接口中使用相同的方式覆盖父接口中的配置
+   *
+   * @param entity 实体类
+   * @return 1成功，0失败
+   */
+  @Override
+  @Lang(Caching.class)
+  @Options(useGeneratedKeys = true, keyProperty = "order_id")
+  @InsertProvider(type = EntityProvider.class, method = "insertSelective")
+  int insertSelective(Order entity);
 }
 ```
 
