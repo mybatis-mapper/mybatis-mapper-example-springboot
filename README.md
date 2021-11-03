@@ -1,6 +1,11 @@
 # mybatis-mapper spring-boot 示例
 
-## https://mapper.mybatis.io
+项目目前包含 3 个分支，分别为：
+- master 简单集成
+- baseid 简单封装，所有表都使用名为 id，类型为 bigint 的自增主键
+- shardingsphere 分库分表，支持分库分表的代码生成，每个表有不同的id
+
+## master 分支
 
 ## 项目依赖
 
@@ -9,7 +14,7 @@
 <dependency>
   <groupId>io.mybatis</groupId>
   <artifactId>mybatis-service</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.3</version>
 </dependency>
 ```
 这个依赖会传递依赖 `mybatis-mapper` 模块。
