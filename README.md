@@ -25,6 +25,32 @@
 </dependency>
 ```
 
+## 数据库脚本
+
+两个库，每个库上有两个表结构，每个表各有两个分片，每个库相当于有4个表。
+
+```sql
+DROP DATABASE IF EXISTS db_0;
+DROP DATABASE IF EXISTS db_1;
+
+CREATE DATABASE db_0;
+CREATE DATABASE db_1;
+
+CREATE TABLE db_0.t_order0 (order_id INT NOT NULL, user_id INT NOT NULL, status VARCHAR(45) NULL, PRIMARY KEY (order_id));
+CREATE TABLE db_0.t_order1 (order_id INT NOT NULL, user_id INT NOT NULL, status VARCHAR(45) NULL, PRIMARY KEY (order_id));
+CREATE TABLE db_0.t_order_item0 (item_id INT NOT NULL, order_id INT NOT NULL, user_id INT NOT NULL, status VARCHAR(45) NULL, creation_date DATE, PRIMARY KEY (item_id));
+CREATE TABLE db_0.t_order_item1 (item_id INT NOT NULL, order_id INT NOT NULL, user_id INT NOT NULL, status VARCHAR(45) NULL, creation_date DATE, PRIMARY KEY (item_id));
+CREATE INDEX order_index_t_order ON db_0.t_order0 (order_id);
+CREATE INDEX order_index_t_order ON db_0.t_order1 (order_id);
+
+CREATE TABLE db_1.t_order0 (order_id INT NOT NULL, user_id INT NOT NULL, status VARCHAR(45) NULL, PRIMARY KEY (order_id));
+CREATE TABLE db_1.t_order1 (order_id INT NOT NULL, user_id INT NOT NULL, status VARCHAR(45) NULL, PRIMARY KEY (order_id));
+CREATE TABLE db_1.t_order_item0 (item_id INT NOT NULL, order_id INT NOT NULL, user_id INT NOT NULL, status VARCHAR(45) NULL, creation_date DATE, PRIMARY KEY (item_id));
+CREATE TABLE db_1.t_order_item1 (item_id INT NOT NULL, order_id INT NOT NULL, user_id INT NOT NULL, status VARCHAR(45) NULL, creation_date DATE, PRIMARY KEY (item_id));
+CREATE INDEX order_index_t_order ON db_1.t_order0 (order_id);
+CREATE INDEX order_index_t_order ON db_1.t_order1 (order_id);
+```
+
 ## 配置文件
 
 主要是分片规则（参考官方示例），剩下的是 mybatis xml 配置文件路径的配置。
@@ -67,8 +93,7 @@ spring:
 mybatis:
   mapper-locations: classpath*:mappers/*.xml
 ```
-
-这个配置文件根据自己的需要进行配置即可。
+分片规则中，先根据用户 `user_id` 分库，再根据订单 `order_id` 分表，这个配置文件根据自己的需要进行配置即可。
 
 ## 代码生成器
 
